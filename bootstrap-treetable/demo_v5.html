@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html  lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="renderer" content="webkit">
+    <title>bootstrap-treetable</title>
+    <meta name="keywords" content="bootstrap-treetable">
+    <meta name="description" content="bootstrap-treetable">
+    <link rel="stylesheet" href="./libs/v4/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./bootstrap-treetable.css" type="text/css" />
+    <link rel="stylesheet" href="./css/page.css" type="text/css" />
+    <style>
+        .black_overlay{
+            width:100%; height:100%; background:url(./fonts/box_bg.png) repeat center top; display:none; position:fixed; top:0%; left:0%; z-index:1000000;
+        }
+        .white_content{
+            width:540px; height:auto !important; min-height:100px; height:100px; background:url(./fonts/box.png) repeat center top; display:none; position:fixed; top:30%; left:50%; margin-left:-270px; z-index:1000001;
+        }
+        .white_d{
+            width:520px; overflow:hidden; background-color:#FFF; margin:10px; padding-bottom:50px;
+        }
+        .notice_t{
+            width:500px; height:30px; line-height:30px; overflow:hidden; font-size:16px; font-family:"Microsoft YaHei"; margin:1px auto;
+        }
+        .notice_c{
+            width:480px; overflow:hidden; margin-top:10px;
+        }
+    </style>
+</head>
+<body>
+<!--Begin 弹出层-删除商品 Begin-->
+<div id="fade" class="black_overlay"></div>
+<div id="MyDiv" class="white_content">
+    <div class="white_d">
+        <div class="notice_t">
+            <span class="fr" style="margin-top:10px; cursor:pointer;" onclick="myCloseDiv('MyDiv','fade')"><img src="./fonts/close.gif" /></span>
+        </div>
+
+        <div style="text-align: center">
+            <h1>添加渠道</h1>
+            <div style="text-align: left;">
+                <div style="margin: 3% 3%">
+                    <span>上级渠道:</span>
+                    <select id="xuanzeshangjiqudao_select">
+<!--                        <option value="volvo">Volvo</option>-->
+<!--                        <option value="saab">Saab</option>-->
+<!--                        <option value="opel">Opel</option>-->
+<!--                        <option value="audi">Audi</option>-->
+                    </select>
+                    <span>
+                        已维护的所有渠道均可作为上级渠道
+                    </span>
+                </div>
+                <div style="margin: 3% 3%">
+                    <span>渠道名称:</span>
+                    <input type="text" maxlength="50" placeholder="请输入渠道名称" id="channelNameaddInput">
+                    <span>50字以内</span>
+                </div>
+                <div style="margin: 3% 3%">
+                    <span>渠道分类：</span>
+                    <select id="quxianleibie_seclet">
+                        <option value="1">区县</option>
+                        <option value="2">部委</option>
+                        <option value="3">平台</option>
+                        <option value="4">物料</option>
+                    </select>
+                    <span>码表维护 区县、部委、平台、物料</span>
+                </div>
+
+                <div style="text-align: center">
+                    <button onclick="myCloseDiv('MyDiv','fade')">取消</button>
+                    <button onclick="addNewQuDao()">确定</button>
+<!--                    <div style="display: inline-block">取消</div>-->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div style="border-bottom: 5px solid red;width: 10%;text-align: center;margin-top:100px">
+        <h2>渠道管理</h2>
+
+    </div>
+    <div style="width: 80%;float: left">
+        <div style="float: right;width:8%">
+            <div style="height: 50px;background-color: red;text-align: center;line-height: 50px">
+                <a href="javascript:void (0)" onclick = "myShowDiv('fade','MyDiv')"><span style="font-size: 20px;color: white">添加渠道</span></a>
+            </div>
+        </div>
+    </div>
+    <div style="margin:5% 5%;display: inline-block;width: 80%">
+
+        <div style="margin-left: 10px;width: 100%">
+            <span style="display: inline-block;background-color: red;width:20px;border-radius: 50%">&nbsp;&nbsp;&nbsp;</span>
+            汇总：
+<!--            <select id="selectIdSelect">-->
+<!--                <option value="1">按天计算</option>-->
+<!--                <option value="2">按月计算</option>-->
+<!--                <option value="3">按周计算</option>-->
+<!--            </select>-->
+            <input type="date" id="preInputDate">
+            ~
+            <input type="date" id="nextInputDate">
+            <input type="text" placeholder="请输入渠道名进行查询" style="margin-left: 100px;width:200px" id="seachWord">
+            <button style="width: 60px;background-color: green" onclick="seachClick()">搜索</button>
+<!--            <span style="float: right">-->
+<!--                统计时间：<span id="tongjishijianSpan">2019-10-01 10:00</span>-->
+<!--            </span>-->
+        </div>
+
+    </div>
+<div>
+    <button id="expandAllBtn" type="button" class="btn btn-secondary">展开/折叠 所有</button>
+</div>
+<table id="demo"></table>
+<!-- 分页结构 -->
+<div class="page">
+    <div class="page-l" id="page_l" style="float: left;">
+        <span>总共 查询到<span id="total_count"></span> 条顶级渠道</span>
+<!--        <div class="page-size-box">-->
+<!--            <span>每页显示</span>-->
+<!--            <select id="page_size">-->
+<!--                <option value="10">10</option>-->
+<!--                <option value="20">20</option>-->
+<!--                <option value="50">50</option>-->
+<!--                <option value="100">100</option>-->
+<!--            </select>条-->
+<!--        </div>-->
+    </div>
+    <div class="page-r">
+        <ul id="page_ul" class="page-ul"></ul>
+    </div>
+</div>
+
+
+<!-- 全局js -->
+<script type="text/javascript" src="./libs/jquery.min.js"></script>
+<script type="text/javascript" src="./libs/v4/popper.min.js"></script>
+<script type="text/javascript" src="./libs/v4/bootstrap.min.js"></script>
+<script type="text/javascript" src="./bootstrap-treetable.js"></script>
+<script type="text/javascript" src="./js/layer/layer.js"></script>
+<script src="./js/page.js"></script>
+<script type="text/javascript">
+    var seachConfig = {
+        preInputDate : "",
+        nextInputDate : "",
+        seachWord : ""
+    }
+
+    //分页参数（参数名固定不可变）
+    var pageConfig = {
+        pageSize: 3,                //每页条数（不设置时，默认为10）
+        prevPage: '上页',             //上一页（不设置时，默认为：<）
+        nextPage: '下页',             //下一页（不设置时，默认为：>）
+        firstPage: '首页',            //首页（不设置时，默认为：<<）
+        lastPage: '末页',             //末页（不设置时，默认为：>>）
+        degeCount: 4,                //当前页前后两边可显示的页码个数（不设置时，默认为3）
+        ellipsis: true               //是否显示省略号按钮(不可点击)（true:显示，false:不显示，不设置时，默认为显示）
+    }
+
+    var data_info = "";
+    var work_space_url="http://192.168.2.56:60229/share/channel/";
+    var work_space_pagecontent_url = work_space_url +"getChannelShareList?total="+pageConfig.pageSize
+    var work_space_initPage_url = work_space_url + "getSuperChannelSize";
+    // 初始化添加渠道可选择内容
+    var dedaoqudaotouxinxi_url = work_space_url + "getSuperChannelList?channelType="
+    var add_xindequdao_url = work_space_url + "addChannelMsg";
+    var delete_qudao_url = work_space_url + "deleteChannel?channelId="
+    /*
+    点击搜索
+    * */
+    function seachClick(){
+        seachConfig.preInputDate = $("#preInputDate")[0].value;
+        seachConfig.nextInputDate = $("#nextInputDate")[0].value;
+        seachConfig.seachWord = $("#seachWord")[0].value;
+        // console.log(seachConfig);
+        console.log(work_space_pagecontent_url+"&startTime="+seachConfig.preInputDate+"&endTime="+seachConfig.nextInputDate+"&channelName="+seachConfig.seachWord);
+        pageContentInit(work_space_pagecontent_url+"&startTime="+seachConfig.preInputDate+"&endTime="+seachConfig.nextInputDate+"&channelName="+seachConfig.seachWord);
+        // jQuery.ajax({
+        //     async:true,
+        //     url:,
+        //     type:"get",
+        //     dataType:"json",
+        //     beforeSend:function(){
+        //         layer.load(1);
+        //     },
+        //     success:function(data){
+        //         layer.closeAll('loading');
+        //
+        //         if (data.code == 200){
+        //
+        //         } else{
+        //             alert(data.message)
+        //         }
+        //     }
+        // })
+    }
+
+    /*
+    添加选择分类，初始化上级渠道事件
+    */
+    $("#quxianleibie_seclet").change(function(){
+        let value = $("#quxianleibie_seclet option:selected")[0].value;
+        initQuDaoTitle(value);
+    });
+
+    /*
+    根据id初始化顶级渠道名
+    */
+    function initQuDaoTitle(id){
+        jQuery.ajax({
+            async:true,
+            url:dedaoqudaotouxinxi_url+id,
+            type:"get",
+            dataType:"json",
+            beforeSend:function(){
+                layer.load(1);
+            },
+            success:function(data){
+                layer.closeAll('loading');
+
+                if (data.code == 200){
+                    var data = data.data;
+                    console.log(data);
+                    var xuanzeshangjiqudao_select = $("#xuanzeshangjiqudao_select");
+                    var str = "<option value='-1'>顶级渠道</option>";
+                    for (let i = 0;i < data.length;i++){
+                        var dataTemp = data[i];
+                        str += "<option value="+dataTemp.id+">"+dataTemp.channelName+"</option>";
+                    }
+                    xuanzeshangjiqudao_select.html(str);
+                } else{
+                    alert(data.message)
+                }
+            }
+        })
+    }
+
+    /*
+    添加新的渠道
+    */
+    function addNewQuDao(){
+        var channelLevel = $("#xuanzeshangjiqudao_select option:selected")[0].value;
+        var channelName = $("#channelNameaddInput")[0].value;
+        var channelType = $("#quxianleibie_seclet option:selected")[0].value;
+        var parentId = null;
+
+        if (channelLevel != -1) {
+            parentId = channelLevel;
+            channelLevel = 2;
+        }else{
+            channelLevel = 1;
+        }
+        if (channelName == "undefined") {
+            alert("输入不能为空");
+        }else{
+            var url = null;
+            if (parentId != null){
+              url = add_xindequdao_url+"?channelLevel="+channelLevel+"&channelName="+channelName+"&channelType="+channelType+"&parentId="+parentId;
+            } else{
+                url = add_xindequdao_url+"?channelLevel="+channelLevel+"&channelName="+channelName+"&channelType="+channelType;
+            }
+
+
+            jQuery.ajax({
+                async:true,
+                url: url,
+                type:"get",
+                dataType:"json",
+                beforeSend:function(){
+                    layer.load(1);
+                },
+                success:function(data){
+                    layer.closeAll('loading');
+
+                    if (data.code == 200){
+                        // location.href = location.href;
+                        location.reload();
+                    } else{
+                        alert(data.message)
+                    }
+                }
+            })
+        }
+
+    }
+
+    function myShowDiv(show_div,bg_div){
+        document.getElementById(show_div).style.display='block';
+        document.getElementById(bg_div).style.display='block' ;
+        initQuDaoTitle(1);
+        var bgdiv = document.getElementById(bg_div);
+        bgdiv.style.width = document.body.scrollWidth;
+        // bgdiv.style.height = $(document).height();
+        jQuery("#"+bg_div).height(jQuery(document).height());
+    };
+
+    function myCloseDiv(show_div,bg_div)
+    {
+        document.getElementById(show_div).style.display='none';
+        document.getElementById(bg_div).style.display='none';
+    };
+
+    function deleteQudao(channelId,channelName) {
+        if (confirm("确认删除"+channelName+"?")) {
+            jQuery.ajax({
+                async:true,
+                url:delete_qudao_url+channelId,
+                type:"get",
+                dataType:"json",
+                success:function(data){
+                    tableFlush(treeTableDatas);
+                }
+            })
+        }
+    }
+
+/**
+                    rootIdValue: null,//设置根节点id值----可指定根节点，默认为null,"",0,"0"
+                    id : "id",               // 选取记录返回的值,用于设置父子关系
+                    parentId : "parentId",       // 用于设置父子关系
+                    type: 'get',                   // 请求方式（*）
+                    url: "./data.json",             // 请求后台的URL（*）
+                    ajaxParams : {},               // 请求数据的ajax的data属性
+                    expandColumn : 0,            // 在哪一列上面显示展开按钮
+                    expandAll : false,                // 是否全部展开
+                    expandFirst : true, // 是否默认第一级展开--expandAll为false时生效
+                    toolbar: null,//顶部工具条
+                    height: 0,
+                    expanderExpandedClass : 'glyphicon glyphicon-chevron-down',// 展开的按钮的图标
+                    expanderCollapsedClass : 'glyphicon glyphicon-chevron-right',// 缩起的按钮的图标
+**/
+    var treeTableDatas = {
+                            url:work_space_pagecontent_url,
+                            onLoadSuccess:function(data) {
+                                console.log(data)
+                                data_info =  JSON.stringify(data);
+                            },
+
+                            expandColumn : 2,            // 在哪一列上面显示展开按钮
+                            height:500,
+                            pagination: true,
+                            columns: [ {
+                                    field: 'selectItem',
+                                    radio: true
+                                 },{
+                                    field: 'sort',
+                                    title: '排序',
+                                    width: '10%',
+                                    align: "left",
+                                    valign: "bottom",
+                                    visible: true
+                                },{
+                                    title: '渠道名称',
+                                    field: 'channelName',
+                                    width: '20%',
+                                    formatter: function(value,row, index) {
+                                        if (row.icon == null || row == "") {
+                                            return row.channelName;
+                                        } else {
+                                            return '<i class="' + row.icon + '"></i> <span class="nav-label">' + row.menuName + '</span>';
+                                        }
+                                    }
+                                },
+                                {
+                                    field: 'channelType',
+                                    title: '渠道分类',
+                                    width: '10%',
+                                    align: "center",
+                                    valign: "top",
+                                    formatter: function(value,item, index) {
+                                        if (item.channelType == '1') {
+                                            return '<span class="label label-success">区县</span>';
+                                        }
+                                        else if (item.channelType == '2') {
+                                            return '<span class="label label-primary">部委</span>';
+                                        }
+                                        else if (item.channelType == '3') {
+                                            return '<span class="label label-warning">平台</span>';
+                                        }
+                                        else if (item.channelType == '3') {
+                                            return '<span class="label label-warning">物料</span>';
+                                        }
+
+                                    }
+                                },
+                                {
+                                    field: 'realNameNum',
+                                    title: '实名人数',
+                                    width: '15%',
+                                    align: "center",
+                                    valign: "top",
+                                    formatter: function(value,item, index){
+                                        if(item.channelLevel=='1'){
+                                            return '<span class="label label-success">'+(item.realNameNum+item.subChannelRealNameNum)+'('+item.realNameNum+')'+'</span>';
+                                        }
+                                        else if(item.channelLevel=='2'){
+                                            return '<span class="label label-success">'+(item.realNameNum)+'</span>';
+                                        }
+
+                                    }
+                                },
+                                {
+                                    field: 'nonRealNameNum',
+                                    title: '未实名人数',
+                                    width: '15%',
+                                    align: "center",
+                                    valign: "top",
+                                    formatter: function(value,item, index){
+                                        if(item.channelLevel=='1'){
+                                            return '<span class="label label-success">'+(item.nonRealNameNum+item.subChannelNonRealNameNum)+'('+item.nonRealNameNum+')'+'</span>';
+                                        }
+                                        else if(item.channelLevel=='2'){
+                                            return '<span class="label label-success">'+(item.nonRealNameNum)+'</span>';
+                                        }
+
+                                    }
+                                },
+                                {
+                                    field: 'nonRealNameNum',
+                                    title: '总邀请数',
+                                    width: '15%',
+                                    align: "center",
+                                    valign: "top",
+                                    formatter: function(value,item, index){
+                                        if(item.channelLevel=='1'){
+                                            return '<span class="label label-success">'+(item.realNameNum+item.subChannelRealNameNum+item.nonRealNameNum+item.subChannelNonRealNameNum)+'('+(item.realNameNum+item.nonRealNameNum)+')'+'</span>';
+                                        }
+                                        else if(item.channelLevel=='2'){
+                                            return '<span class="label label-success">'+(item.realNameNum+item.nonRealNameNum)+'</span>';
+                                        }
+                                    }
+                                },
+                                {
+                                    title: '操作',
+                                    width: '20%',
+                                    align: "center",
+                                    formatter: function(value,row, index) {
+                                        var actions = [];
+                                        actions.push('<a class="btn btn-success btn-xs "  href='+work_space_url+"getQRCodeByChannelId?channelId="+row.id+"&channelName="+row.channelName+' download="w3logo"><i class="fa fa-edit"></i>下载二维码</a> ');
+                                        actions.push('<a class="btn btn-info btn-xs " href="javascript:void (0)" onclick="deleteQudao('+row.id+",\'"+row.channelName+'\')" ><i class="fa fa-plus"></i>删除</a> ');
+                                        return actions.join('');
+                                    }
+                                }],
+                            data:data_info
+                        };
+
+
+    treeTable = $('#demo').bootstrapTreeTable(treeTableDatas);
+
+    $("#selectBtn").click(function(){
+        var selecteds = $('#demo').bootstrapTreeTable('getSelections');
+        $.each(selecteds,function(_i,_item){
+            console.log(_item);
+        });
+        alert("看console");
+    })
+
+    // $("#addBtn").click(function(){
+    //     var data = [];
+    //     $('#demo').bootstrapTreeTable('appendData',data);
+    // })
+    $("#expandRowBtn").click(function(){
+        $('#demo').bootstrapTreeTable('toggleRow',1);
+    })
+    var _expandFlag_all = false;
+    $("#expandAllBtn").click(function(){
+        if(_expandFlag_all){
+            $('#demo').bootstrapTreeTable('expandAll');
+        }else{
+            $('#demo').bootstrapTreeTable('collapseAll');
+        }
+        _expandFlag_all = _expandFlag_all?false:true;
+    })
+    var _showFlag = true;
+
+    $("#showColumnBtn").click(function(){
+        if(_showFlag){
+            $('#demo').bootstrapTreeTable('hideColumn',"orderNum");
+        }else{
+            $('#demo').bootstrapTreeTable('showColumn',"orderNum");
+        }
+        _showFlag = _showFlag?false:true;
+    })
+
+    // $("#destroyBtn").click(function(){
+    //     $('#demo').bootstrapTreeTable('destroy');
+    // })
+
+    // 开始分页操作
+    $(function () {
+
+        // var pageConfig = {
+        //     // pageIndex: pageIndex,
+        //     // pageSize: pageSize,
+        //     // name: userName
+        //
+        //     startTime :"", //开始时间 yyyy-MM-dd
+        //     endTime   :"",   //结束时间 yyyy-MM-dd
+        //     channelName:"", //渠道商名称
+        //     channelType :"", //渠道分类1.区县 2.部委 3.平台 4.物料
+        //     sortType   :"", //排序规则 1为正序 0为降序
+        //     total  :"",  //每页长度
+        //     page   :"", //当前页面
+        // }
+
+        //初始化页面滚动条
+        initpage();
+
+        //分页列表的初始化
+        function initpage(data) {
+            //初始化Paging实例(pageConfig参数也可以为空对象，此时就是默认设置)
+            var pageIng = new Paging(pageConfig, function (pageIndex, pageSize) {
+                // var userName = $('#user_name').val();
+                var url = work_space_initPage_url+"?startTime="+seachConfig.preInputDate+"&endTime="+seachConfig.nextInputDate+"&channelName="+seachConfig.seachWord;
+                $.ajax({
+                    url:url, //这里就不显示接口地址
+                    type:'get',
+                    data:data,
+                    success: function (res) {
+                        if(res.code == 200){
+                            if(res.data > 0){  //如果查询到了数据
+                                // var dataList = res.data;
+                                // var html = '';
+                                // dataList.forEach(function (item, i) {
+                                //     html += '<tr>'+
+                                //         '<td style="width: 20%;">'+((pageIndex-1)*pageSize+i+1)+'</td>'+
+                                //         '<td style="width: 20%;">'+item.id+'</td>'+
+                                //         '<td style="width: 30%;">'+item.name+'</td>'+
+                                //         '<td style="width: 30%;">'+item.createTime+'</td>'+
+                                //         '</tr>';
+                                // });
+                                // $('#data_list').html(html);
+
+                                var totalCount = res.data;   //接口返回的总条数
+                                var totalPage = Math.ceil(totalCount / pageSize);   //根据总条数和每页条数计算总页码数
+
+                                // 调用Paging实例的 initPage()方法生成分页DOM结构
+                                pageIng.initPage(totalCount, totalPage, pageIndex);
+                                $('.page').show();
+                                $('.no-data').hide();
+                            }else{  //如果未查询到数据
+                                $('#data_list').html('');
+                                $('.page').hide();
+                                $('.no-data').show();
+                            }
+                        }else{
+                            $('#data_list').html('');
+                            $('.page').hide();
+                            $('.no-data').show();
+                        }
+                    }
+                })
+            });
+        }
+    })
+</script>
+</body>
+</html>
